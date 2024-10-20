@@ -3,6 +3,9 @@ import { Container, Row, Col } from "react-bootstrap";
 import contactImg from "../assets/img/contact-img.svg";
 import "animate.css";
 import TrackVisibility from "react-on-screen";
+import emailjs from "emailjs-com";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export const Contact = () => {
   const formInitialDetails = {
@@ -12,9 +15,9 @@ export const Contact = () => {
     phone: "",
     message: "",
   };
+
   const [formDetails, setFormDetails] = useState(formInitialDetails);
   const [buttonText, setButtonText] = useState("Send");
-  const [status, setStatus] = useState({});
 
   const onFormUpdate = (category, value) => {
     setFormDetails({
@@ -23,15 +26,41 @@ export const Contact = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
+  // Validate form fields
+  const validateForm = () => {
+    const { firstName, lastName, email, phone, message } = formDetails;
+    if (!firstName || !lastName || !email || !phone || !message) {
+      toast.error("Please fill in all fields");
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Validate form before submission
+    if (!validateForm()) return;
+
     setButtonText("Sending...");
 
-    setTimeout(() => {
-      setButtonText("Send"); // Reset the button text
-      setFormDetails(formInitialDetails);
-      setStatus({ succes: true, message: "Message sent successfully" });
-    }, 3000);
+    const serviceID = "service_8h2876k";
+    const templateID = "template_418jstd";
+    const userID = "OafriANm-f_jEj-m6";
+
+    emailjs.send(serviceID, templateID, formDetails, userID).then(
+      (response) => {
+        console.log("SUCCESS!", response.status, response.text);
+        toast.success("Your message has been sent!");
+        setButtonText("Send");
+        setFormDetails(formInitialDetails);
+      },
+      (err) => {
+        console.error("FAILED...", err);
+        toast.error("Message could not be sent. Please try again later.");
+        setButtonText("Send");
+      }
+    );
   };
 
   return (
@@ -75,7 +104,7 @@ export const Contact = () => {
                       <Col size={12} sm={6} className="px-1">
                         <input
                           type="text"
-                          value={formDetails.lasttName}
+                          value={formDetails.lastName}
                           placeholder="Last Name"
                           onChange={(e) =>
                             onFormUpdate("lastName", e.target.value)
@@ -115,17 +144,6 @@ export const Contact = () => {
                           <span>{buttonText}</span>
                         </button>
                       </Col>
-                      {status.message && (
-                        <Col>
-                          <p
-                            className={
-                              status.success === false ? "danger" : "success"
-                            }
-                          >
-                            {status.message}
-                          </p>
-                        </Col>
-                      )}
                     </Row>
                   </form>
                 </div>
@@ -134,6 +152,7 @@ export const Contact = () => {
           </Col>
         </Row>
       </Container>
+      <ToastContainer />
     </section>
   );
 };
